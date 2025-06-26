@@ -4,6 +4,7 @@ import userRoutes from "../routes/UserRoutes";
 import { categoryRouter } from "../routes/categoryRoutes";
 import { priorityRouter } from "../routes/priorityRoutes";
 import { incidentRouter } from "../routes/incidentRoutes";
+import { CommentsRouter } from "../routes/commentsRoutes";
 import cors from "cors"
 
 class App{
@@ -26,6 +27,7 @@ class App{
         this.app.use("/api", categoryRouter);
         this.app.use("/api", priorityRouter);
         this.app.use("/api", incidentRouter);
+        this.app.use("/api", CommentsRouter);
     }
 
     getApp(){

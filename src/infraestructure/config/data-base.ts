@@ -4,6 +4,7 @@ import { User } from "../entities/User";
 import { Category } from "../entities/Category";
 import { Priority } from "../entities/Priority";
 import { Incident } from "../entities/Incident";
+import { Comments } from "../entities/Comments";
 
 configDotenv.config();
 
@@ -16,7 +17,7 @@ export const AppDataSource = new DataSource ({
     database: process.env.DB_NAME,
     synchronize: false,//no se usa en produccion
     logging: true,
-    entities: [User, Category, Priority, Incident],
+    entities: [User, Category, Priority, Incident , Comments],
 });
 
 //conectar a la base de datos
