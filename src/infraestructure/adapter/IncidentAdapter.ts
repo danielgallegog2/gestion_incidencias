@@ -18,7 +18,7 @@ import { AppDataSource } from "../config/data-base";
  */
 export class IncidentAdapter implements IncidentPort {
   private incidentRepository: Repository<IncidentEntity>;
-    port: any;
+  port: any;
 
   /**
    * Constructor que inicializa el repositorio de TypeORM
@@ -527,7 +527,7 @@ export class IncidentAdapter implements IncidentPort {
 
     // Nota: Aquí se podría agregar validación para verificar si la incidencia
     // tiene comentarios antes de eliminarla
-    
+
     return await this.port.deleteIncident(id);
   }
 
@@ -551,94 +551,129 @@ export class IncidentAdapter implements IncidentPort {
     tiempoPromedioResolucion?: number;
   }> {
     try {
-      const queryBuilder = this.incidentRepository
-        .createQueryBuilder("incident")
-        .leftJoin("incident.categoria", "categoria")
-        .leftJoin("incident.prioridad", "prioridad");
+      console.log("Iniciando getIncidentStatistics con filtros:", filters);
 
-      // Aplicar filtros
+      // Construir condiciones WHERE base
+      let whereConditions = "1 = 1";
+      const queryParams: any = {};
+
       if (filters) {
         if (filters.fechaDesde) {
-          queryBuilder.andWhere("incident.creado_en >= :fechaDesde", {
-            fechaDesde: filters.fechaDesde,
-          });
+          whereConditions += " AND incident.creado_en >= :fechaDesde";
+          queryParams.fechaDesde = filters.fechaDesde;
         }
         if (filters.fechaHasta) {
-          queryBuilder.andWhere("incident.creado_en <= :fechaHasta", {
-            fechaHasta: filters.fechaHasta,
-          });
+          whereConditions += " AND incident.creado_en <= :fechaHasta";
+          queryParams.fechaHasta = filters.fechaHasta;
         }
         if (filters.usuarioId) {
-          queryBuilder.andWhere("incident.usuario_id = :usuarioId", {
-            usuarioId: filters.usuarioId,
-          });
+          whereConditions += " AND incident.usuario_id = :usuarioId";
+          queryParams.usuarioId = filters.usuarioId;
         }
         if (filters.categoriaId) {
-          queryBuilder.andWhere("incident.categoria_id = :categoriaId", {
-            categoriaId: filters.categoriaId,
-          });
+          whereConditions += " AND incident.categoria_id = :categoriaId";
+          queryParams.categoriaId = filters.categoriaId;
         }
       }
 
-      // Obtener datos básicos
-      const incidents = await queryBuilder
-        .select([
-          "incident.estado",
-          "categoria.nombre_categoria",
-          "prioridad.nombre_prioridad",
-          "incident.creado_en",
-          "incident.actualizado_en",
-        ])
-        .getRawMany();
+      // 1. Estadísticas básicas por estado
+      const basicStatsQuery = `
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN estado = 'abierta' THEN 1 ELSE 0 END) as abiertas,
+        SUM(CASE WHEN estado = 'en_progreso' THEN 1 ELSE 0 END) as enProgreso,
+        SUM(CASE WHEN estado = 'cerrada' THEN 1 ELSE 0 END) as cerradas
+      FROM incidencias incident
+      WHERE ${whereConditions}
+    `;
 
-      // Calcular estadísticas
-      const total = incidents.length;
-      const abiertas = incidents.filter(
-        (i) => i.incident_estado === "abierta"
-      ).length;
-      const enProgreso = incidents.filter(
-        (i) => i.incident_estado === "en_progreso"
-      ).length;
-      const cerradas = incidents.filter(
-        (i) => i.incident_estado === "cerrada"
-      ).length;
-
-      // Estadísticas por categoría
-      const porCategoria: { [key: string]: number } = {};
-      incidents.forEach((i) => {
-        const categoria = i.categoria_nombre_categoria || "Sin categoría";
-        porCategoria[categoria] = (porCategoria[categoria] || 0) + 1;
-      });
-
-      // Estadísticas por prioridad
-      const porPrioridad: { [key: string]: number } = {};
-      incidents.forEach((i) => {
-        const prioridad = i.prioridad_nombre_prioridad || "Sin prioridad";
-        porPrioridad[prioridad] = (porPrioridad[prioridad] || 0) + 1;
-      });
-
-      // Calcular tiempo promedio de resolución (solo para incidencias cerradas)
-      const incidenciasCerradas = incidents.filter(
-        (i) =>
-          i.incident_estado === "cerrada" &&
-          i.incident_creado_en &&
-          i.incident_actualizado_en
+      const basicStats = await this.incidentRepository.manager.query(
+        basicStatsQuery,
+        queryParams
       );
+      console.log("Basic stats result:", basicStats);
 
+      const stats = basicStats[0];
+      const total = parseInt(stats.total) || 0;
+      const abiertas = parseInt(stats.abiertas) || 0;
+      const enProgreso = parseInt(stats.enProgreso) || 0;
+      const cerradas = parseInt(stats.cerradas) || 0;
+
+      // 2. Estadísticas por categoría
+      const categoryStatsQuery = `
+      SELECT 
+        c.nombre as categoria_nombre,
+        COUNT(incident.id_incidencias) as cantidad
+      FROM incidencias incident
+      LEFT JOIN categorias c ON incident.categoria_id = c.id_categorias
+      WHERE ${whereConditions}
+      GROUP BY incident.categoria_id, c.nombre
+      ORDER BY cantidad DESC
+    `;
+
+      const categoryStats = await this.incidentRepository.manager.query(
+        categoryStatsQuery,
+        queryParams
+      );
+      console.log("Category stats result:", categoryStats);
+
+      const porCategoria: { [key: string]: number } = {};
+      categoryStats.forEach((stat: any) => {
+        const categoria = stat.categoria_nombre || "Sin categoría";
+        porCategoria[categoria] = parseInt(stat.cantidad) || 0;
+      });
+
+      // 3. Estadísticas por prioridad
+      const priorityStatsQuery = `
+      SELECT 
+        p.nombre_prioridad as prioridad_nombre,
+        COUNT(incident.id_incidencias) as cantidad
+      FROM incidencias incident
+      LEFT JOIN prioridades p ON incident.prioridad_id = p.id_prioridad
+      WHERE ${whereConditions}
+      GROUP BY incident.prioridad_id, p.nombre_prioridad
+      ORDER BY cantidad DESC
+    `;
+
+      const priorityStats = await this.incidentRepository.manager.query(
+        priorityStatsQuery,
+        queryParams
+      );
+      console.log("Priority stats result:", priorityStats);
+
+      const porPrioridad: { [key: string]: number } = {};
+      priorityStats.forEach((stat: any) => {
+        const prioridad = stat.prioridad_nombre || "Sin prioridad";
+        porPrioridad[prioridad] = parseInt(stat.cantidad) || 0;
+      });
+
+      // 4. Tiempo promedio de resolución (solo para incidencias cerradas)
       let tiempoPromedioResolucion: number | undefined;
-      if (incidenciasCerradas.length > 0) {
-        const tiemposTotales = incidenciasCerradas.map((i) => {
-          const creado = new Date(i.incident_creado_en);
-          const actualizado = new Date(i.incident_actualizado_en);
-          return (actualizado.getTime() - creado.getTime()) / (1000 * 60 * 60); // en horas
-        });
+      if (cerradas > 0) {
+        const resolutionTimeQuery = `
+        SELECT 
+          AVG(TIMESTAMPDIFF(HOUR, creado_en, actualizado_en)) as promedio_horas
+        FROM incidencias incident
+        WHERE estado = 'cerrada' AND ${whereConditions}
+      `;
 
-        tiempoPromedioResolucion =
-          tiemposTotales.reduce((sum, tiempo) => sum + tiempo, 0) /
-          tiemposTotales.length;
+        const resolutionResult = await this.incidentRepository.manager.query(
+          resolutionTimeQuery,
+          queryParams
+        );
+        console.log("Resolution time result:", resolutionResult);
+
+        if (
+          resolutionResult[0] &&
+          resolutionResult[0].promedio_horas !== null
+        ) {
+          tiempoPromedioResolucion = parseFloat(
+            resolutionResult[0].promedio_horas
+          );
+        }
       }
 
-      return {
+      const finalResult = {
         total,
         abiertas,
         enProgreso,
@@ -647,8 +682,15 @@ export class IncidentAdapter implements IncidentPort {
         porPrioridad,
         tiempoPromedioResolucion,
       };
+
+      console.log("Final statistics result:", finalResult);
+      return finalResult;
     } catch (error) {
-      console.error("Error getting incident statistics:", error);
+      console.error("Error generating incident statistics:", error);
+      console.error(
+        "Stack trace:",
+        error instanceof Error ? error.stack : "No stack trace"
+      );
       throw new Error("Error al obtener estadísticas de incidencias");
     }
   }
