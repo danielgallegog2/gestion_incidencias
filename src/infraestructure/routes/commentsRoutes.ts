@@ -1,21 +1,20 @@
-// routes/categoryRoutes.ts
+// routes/commentsRoutes.ts
 import { Router } from "express";
 import { CommentsController } from "../controller/commentsController";
 import { CommentsApplicationService } from "../../application/CommentsApplicationService";
 import { CommentsAdapter } from "../adapter/CommentsAdapter";
 
 /**
- * Configuración de rutas para las operaciones de categorías
+ * Configuración de rutas para las operaciones de comentarios
  * Implementa el patrón de enrutamiento RESTful
  *
  * Endpoints disponibles:
- * - POST   /categories                    - Crear nueva categoría
- * - GET    /categories                    - Obtener todas las categorías
- * - GET    /categories/active             - Obtener categorías activas
- * - GET    /categories/:id                - Obtener categoría por ID
- * - GET    /categories/by-name/:nombre    - Obtener categoría por nombre
- * - PUT    /categories/:id                - Actualizar categoría
- * - DELETE /categories/:id                - Eliminar categoría (lógica)
+ * - POST   /comments                        - Crear nuevo comentario
+ * - GET    /comments                        - Obtener todos los comentarios
+ * - GET    /comments/:id                    - Obtener comentario por ID
+ * - PUT    /comments/:id                    - Actualizar comentario
+ * - DELETE /comments/:id                    - Eliminar comentario
+ * - GET    /comments/incidencia/:incidenciaId - Obtener comentarios por incidencia
  */
 
 // Instanciar las dependencias siguiendo el patrón de inyección de dependencias
@@ -28,73 +27,110 @@ const commentsController = new CommentsController(commentsService);
 const CommentsRouter = Router();
 
 /**
- * Ruta para crear una nueva categoría
+ * Ruta para crear un nuevo comentario
  * Método: POST
- * Endpoint: /categories
- * Body: { nombre: string, descripcion?: string, estado?: number }
- * Respuesta: { message: string, categoryId: number, category: Category }
+ * Endpoint: /comments
+ * Body: { comentario: string, incidencia: number, usuario: number }
+ * Respuesta: { message: string, commentsId: number, comments: Comments }
  */
 CommentsRouter.post("/comments", async (req, res) => {
   try {
     await commentsController.createComments(req, res);
   } catch (error) {
-    res.status(400).json({
-      message: "Error en la creacion de la categoría",
+    res.status(500).json({
+      message: "Error en la creación del comentario",
+      error: error instanceof Error ? error.message : "Error inesperado"
     });
   }
 });
 
 /**
- * Ruta para obtener todas las categorías del sistema
+ * Ruta para obtener todos los comentarios del sistema
  * Método: GET
- * Endpoint: /categories
- * Respuesta: { message: string, count: number, categories: Category[] }
+ * Endpoint: /comments
+ * Respuesta: { message: string, count: number, comments: Comments[] }
  */
-CommentsRouter.get("/comments", async (req, res, next) => {
+CommentsRouter.get("/comments", async (req, res) => {
   try {
     await commentsController.getAllComments(req, res);
   } catch (error) {
-    res.status(400).json({
-            message: "Error al obtener las categorías",
-        })
+    res.status(500).json({
+      message: "Error al obtener los comentarios",
+      error: error instanceof Error ? error.message : "Error inesperado"
+    });
   }
 });
 
-
-
 /**
- * Ruta para obtener una categoría específica por su ID
+ * Ruta para obtener un comentario específico por su ID
  * Método: GET
- * Endpoint: /categories/:id
- * Parámetros: id (number) - ID de la categoría
- * Respuesta: { message: string, category: Category }
+ * Endpoint: /comments/:id
+ * Parámetros: id (number) - ID del comentario
+ * Respuesta: { message: string, comment: Comments }
  */
-CommentsRouter.get("/comments/:id", async (req, res, next) => {
+CommentsRouter.get("/comments/:id", async (req, res) => {
   try {
     await commentsController.getCommentsById(req, res);
   } catch (error) {
-    res.status(400).json({
-            message: "Error al obtener la categoría por ID",
-        })
+    res.status(500).json({
+      message: "Error al obtener el comentario por ID",
+      error: error instanceof Error ? error.message : "Error inesperado"
+    });
   }
 });
 
 /**
- * Ruta para actualizar una categoría existente
+ * Ruta para actualizar un comentario existente
  * Método: PUT
- * Endpoint: /categories/:id
- * Parámetros: id (number) - ID de la categoría a actualizar
- * Body: { nombre?: string, descripcion?: string, estado?: number }
+ * Endpoint: /comments/:id
+ * Parámetros: id (number) - ID del comentario a actualizar
+ * Body: { comentario?: string, incidencia?: number, usuario?: number }
  * Respuesta: { message: string }
  */
-
-CommentsRouter.put("/comments/:id", async (req, res, next) => {
+CommentsRouter.put("/comments/:id", async (req, res) => {
   try {
     await commentsController.updateComments(req, res);
   } catch (error) {
-    res.status(400).json({
-            message: "Error en la actualización de la categoría",
-        })
+    res.status(500).json({
+      message: "Error en la actualización del comentario",
+      error: error instanceof Error ? error.message : "Error inesperado"
+    });
+  }
+});
+
+/**
+ * Ruta para eliminar un comentario
+ * Método: DELETE
+ * Endpoint: /comments/:id
+ * Parámetros: id (number) - ID del comentario a eliminar
+ * Respuesta: { message: string }
+ */
+CommentsRouter.delete("/comments/:id", async (req, res) => {
+  try {
+    await commentsController.deleteComments(req, res);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al eliminar el comentario",
+      error: error instanceof Error ? error.message : "Error inesperado"
+    });
+  }
+});
+
+/**
+ * Ruta para obtener comentarios por ID de incidencia
+ * Método: GET
+ * Endpoint: /comments/incidencia/:incidenciaId
+ * Parámetros: incidenciaId (number) - ID de la incidencia
+ * Respuesta: { message: string, incidenciaId: number, count: number, comments: Comments[] }
+ */
+CommentsRouter.get("/comments/incidencia/:incidenciaId", async (req, res) => {
+  try {
+    await commentsController.getCommentsByIncidencia(req, res);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al obtener los comentarios de la incidencia",
+      error: error instanceof Error ? error.message : "Error inesperado"
+    });
   }
 });
 
