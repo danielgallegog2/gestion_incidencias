@@ -115,14 +115,4 @@ export class UserAdapter implements UserPort {
       throw new Error("Failed to fetch all users");
     }
   }
-
-  async getAllUsers1(): Promise<UserDomain[]> {
-    try {
-      const users = await this.UserRepository.find();
-      return users.map((user) => this.toDomain(user));
-    } catch (error) {
-      console.error("Error fetching all users:", error);
-      throw new Error("Failed to fetch all users");
-    }
-  }
 }
