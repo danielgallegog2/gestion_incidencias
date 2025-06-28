@@ -1,4 +1,3 @@
-// application/CategoryApplicationService.ts
 import { Category } from "../domain/Category";
 import { CategoryPort } from "../domain/CategoryPort";
 
