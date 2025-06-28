@@ -1,4 +1,3 @@
-// controllers/IncidentController.ts
 import { IncidentApplicationService } from "../../application/IncidentApplicationService";
 import { Incident } from "../../domain/Incident";
 import { Request, Response } from "express";
@@ -18,22 +17,10 @@ export class IncidentController {
   private app: IncidentApplicationService;
   incidentRepository: any;
 
-  /**
-   * Constructor que recibe el servicio de aplicación de incidencias
-   * Implementa el patrón de inyección de dependencias
-   * @param app - Servicio de aplicación de incidencias
-   */
   constructor(app: IncidentApplicationService) {
     this.app = app;
   }
 
-  /**
-   * Crea una nueva incidencia
-   * Endpoint: POST /incidents
-   * @param req - Request con los datos de la incidencia en el body
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con el resultado
-   */
   async createIncident(req: Request, res: Response): Promise<Response> {
     const {
       titulo,
@@ -93,7 +80,6 @@ export class IncidentController {
         });
       }
 
-      // Preparar objeto de incidencia para crear
       const incident: Omit<Incident, "id" | "creadoEn" | "actualizadoEn"> = {
         titulo: titulo.trim(),
         descripcion: descripcion ? descripcion.trim() : undefined,
@@ -104,7 +90,6 @@ export class IncidentController {
         prioridadId: prioridadId,
       };
 
-      // Delegar al servicio de aplicación
       const incidentId = await this.app.createIncident(incident);
 
       return res.status(201).json({
@@ -116,9 +101,7 @@ export class IncidentController {
         },
       });
     } catch (error) {
-      // Manejo de errores específicos
       if (error instanceof Error) {
-        // Errores de negocio (validaciones, referencias, etc.)
         if (
           error.message.includes("obligatorio") ||
           error.message.includes("válido") ||
@@ -130,7 +113,6 @@ export class IncidentController {
           });
         }
 
-        // Errores del servidor
         return res.status(500).json({
           error: "Error interno del servidor",
           details: error.message,
@@ -144,13 +126,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Obtiene una incidencia por su ID
-   * Endpoint: GET /incidents/:id
-   * @param req - Request con el ID en los parámetros
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con la incidencia encontrada
-   */
   async getIncidentById(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
@@ -163,7 +138,6 @@ export class IncidentController {
         });
       }
 
-      // Delegar al servicio de aplicación
       const incident = await this.app.getIncidentById(id, includeRelations);
 
       if (!incident) {
@@ -191,18 +165,10 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Obtiene todas las incidencias con filtros opcionales
-   * Endpoint: GET /incidents
-   * @param req - Request con query parameters para filtros
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con las incidencias
-   */
   async getAllIncidents(req: Request, res: Response): Promise<Response> {
     try {
       const includeRelations = req.query.include === "relations";
 
-      // Extraer filtros de query parameters
       const filters: any = {};
 
       if (req.query.estado) {
@@ -275,7 +241,6 @@ export class IncidentController {
         filters.fechaHasta = fechaHasta;
       }
 
-      // Delegar al servicio de aplicación
       const incidents = await this.app.getAllIncidents(
         Object.keys(filters).length > 0 ? filters : undefined,
         includeRelations
@@ -301,13 +266,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Obtiene incidencias por usuario
-   * Endpoint: GET /incidents/user/:usuarioId
-   * @param req - Request con el ID del usuario
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con las incidencias del usuario
-   */
   async getIncidentsByUser(req: Request, res: Response): Promise<Response> {
     try {
       const usuarioId = parseInt(req.params.usuarioId);
@@ -356,13 +314,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Obtiene incidencias por técnico de soporte
-   * Endpoint: GET /incidents/support/:soporteId
-   * @param req - Request con el ID del técnico
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con las incidencias asignadas
-   */
   async getIncidentsBySupport(req: Request, res: Response): Promise<Response> {
     try {
       const soporteId = parseInt(req.params.soporteId);
@@ -412,13 +363,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Obtiene incidencias por categoría
-   * Endpoint: GET /incidents/category/:categoriaId
-   * @param req - Request con el ID de la categoría
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con las incidencias de la categoría
-   */
   async getIncidentsByCategory(req: Request, res: Response): Promise<Response> {
     try {
       const categoriaId = parseInt(req.params.categoriaId);
@@ -467,13 +411,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Obtiene incidencias por prioridad
-   * Endpoint: GET /incidents/priority/:prioridadId
-   * @param req - Request con el ID de la prioridad
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con las incidencias de la prioridad
-   */
   async getIncidentsByPriority(req: Request, res: Response): Promise<Response> {
     try {
       const prioridadId = parseInt(req.params.prioridadId);
@@ -522,13 +459,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Actualiza una incidencia existente
-   * Endpoint: PUT /incidents/:id
-   * @param req - Request con el ID en parámetros y datos a actualizar en el body
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con el resultado de la actualización
-   */
   async updateIncident(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
@@ -603,7 +533,6 @@ export class IncidentController {
         });
       }
 
-      // Preparar objeto de actualización
       const incidentUpdate: Partial<Omit<Incident, "id" | "creadoEn">> = {};
 
       if (titulo) incidentUpdate.titulo = titulo.trim();
@@ -616,7 +545,6 @@ export class IncidentController {
       if (categoriaId) incidentUpdate.categoriaId = categoriaId;
       if (prioridadId) incidentUpdate.prioridadId = prioridadId;
 
-      // Delegar al servicio de aplicación
       const updated = await this.app.updateIncident(id, incidentUpdate);
 
       if (!updated) {
@@ -630,7 +558,6 @@ export class IncidentController {
       });
     } catch (error) {
       if (error instanceof Error) {
-        // Errores de negocio
         if (
           error.message.includes("no encontrada") ||
           error.message.includes("transición") ||
@@ -654,13 +581,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Cambia el estado de una incidencia
-   * Endpoint: PATCH /incidents/:id/status
-   * @param req - Request con el ID y nuevo estado
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con el resultado
-   */
   async changeIncidentStatus(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
@@ -713,13 +633,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Asigna una incidencia a un técnico de soporte
-   * Endpoint: PATCH /incidents/:id/assign
-   * @param req - Request con el ID de la incidencia y ID del técnico
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con el resultado
-   */
   async assignIncident(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
@@ -780,13 +693,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Obtiene estadísticas de incidencias
-   * Endpoint: GET /incidents/statistics
-   * @param req - Request con filtros opcionales
-   * @param res - Response para enviar la respuesta
-   * @returns Promise<Response> - Respuesta HTTP con las estadísticas
-   */
   async getIncidentStatistics(req: Request, res: Response): Promise<Response> {
     try {
       const filters: any = {};
@@ -854,14 +760,12 @@ export class IncidentController {
     }
   }
 
-
   async deleteIncident(
     req: Request,
     res: Response,
     id: number
   ): Promise<boolean> {
     try {
-
       const existingIncident = await this.incidentRepository.findOne({
         where: { id_incidencias: id },
       });

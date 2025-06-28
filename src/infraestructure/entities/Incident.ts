@@ -1,5 +1,10 @@
-// entities/Incident.ts
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
 import { User } from "./User";
 import { Category } from "./Category";
 import { Priority } from "./Priority";
@@ -15,10 +20,10 @@ export class Incident {
   @Column({ type: "text", nullable: true })
   descripcion?: string;
 
-  @Column({ 
-    type: "enum", 
-    enum: ["abierta", "en_progreso", "cerrada"], 
-    default: "abierta" 
+  @Column({
+    type: "enum",
+    enum: ["abierta", "en_progreso", "cerrada"],
+    default: "abierta",
   })
   estado!: "abierta" | "en_progreso" | "cerrada";
 
@@ -37,19 +42,21 @@ export class Incident {
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   creado_en!: Date;
 
-  @Column({ 
-    type: "timestamp", 
-    default: () => "CURRENT_TIMESTAMP", 
-    onUpdate: "CURRENT_TIMESTAMP" 
+  @Column({
+    type: "timestamp",
+    default: () => "CURRENT_TIMESTAMP",
+    onUpdate: "CURRENT_TIMESTAMP",
   })
   actualizado_en!: Date;
-
-  // RELACIONES - Configura sin eager loading por defecto
   @ManyToOne(() => User, { onDelete: "RESTRICT", onUpdate: "CASCADE" })
   @JoinColumn({ name: "usuario_id" })
   usuario!: User;
 
-  @ManyToOne(() => User, { nullable: true, onDelete: "SET NULL", onUpdate: "CASCADE" })
+  @ManyToOne(() => User, {
+    nullable: true,
+    onDelete: "SET NULL",
+    onUpdate: "CASCADE",
+  })
   @JoinColumn({ name: "soporte_id" })
   soporte?: User;
 

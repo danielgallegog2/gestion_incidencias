@@ -14,23 +14,11 @@ import { CategoryPort } from "../domain/CategoryPort";
 export class CategoryApplicationService {
   private port: CategoryPort;
 
-  /**
-   * Constructor que recibe el puerto de categorías
-   * Implementa el patrón de inversión de dependencias
-   * @param port - Implementación del puerto de categorías
-   */
   constructor(port: CategoryPort) {
     this.port = port;
   }
 
-  /**
-   * Crea una nueva categoría aplicando validaciones de negocio
-   * @param category - Datos de la categoría a crear
-   * @returns Promise<number> - ID de la categoría creada
-   * @throws Error si la categoría ya existe o no cumple las validaciones
-   */
   async createCategory(category: Omit<Category, "id" | "fechaCreacion">): Promise<number> {
-    // Validación de datos de entrada
     this.validateCategoryData(category);
 
     // Verificar que no exista una categoría con el mismo nombre
@@ -39,7 +27,6 @@ export class CategoryApplicationService {
       throw new Error("Ya existe una categoría con este nombre");
     }
 
-    // Aplicar reglas de negocio
     const categoryToCreate = {
       ...category,
       nombre: category.nombre.trim(),
@@ -50,12 +37,6 @@ export class CategoryApplicationService {
     return await this.port.createCategory(categoryToCreate);
   }
 
-  /**
-   * Obtiene una categoría por su ID
-   * @param id - Identificador de la categoría
-   * @returns Promise<Category | null> - Categoría encontrada o null
-   * @throws Error si el ID no es válido
-   */
   async getCategoryById(id: number): Promise<Category | null> {
     if (!id || id <= 0) {
       throw new Error("El ID de la categoría debe ser un número positivo");
@@ -64,12 +45,6 @@ export class CategoryApplicationService {
     return await this.port.getCategoryById(id);
   }
 
-  /**
-   * Obtiene una categoría por su nombre
-   * @param nombre - Nombre de la categoría
-   * @returns Promise<Category | null> - Categoría encontrada o null
-   * @throws Error si el nombre no es válido
-   */
   async getCategoryByName(nombre: string): Promise<Category | null> {
     if (!nombre || nombre.trim().length === 0) {
       throw new Error("El nombre de la categoría no puede estar vacío");
@@ -78,37 +53,21 @@ export class CategoryApplicationService {
     return await this.port.getCategoryByName(nombre.trim());
   }
 
-  /**
-   * Obtiene todas las categorías activas del sistema
-   * @returns Promise<Category[]> - Array de categorías activas
-   */
   async getAllActiveCategories(): Promise<Category[]> {
     return await this.port.getAllActiveCategories();
   }
 
-  /**
-   * Obtiene todas las categorías del sistema
-   * @returns Promise<Category[]> - Array de todas las categorías
-   */
   async getAllCategories(): Promise<Category[]> {
     return await this.port.getAllCategories();
   }
 
-  /**
-   * Actualiza una categoría existente
-   * @param id - Identificador de la categoría
-   * @param category - Datos parciales a actualizar
-   * @returns Promise<boolean> - true si se actualizó correctamente
-   * @throws Error si la categoría no existe o los datos no son válidos
-   */
   async updateCategory(id: number, category: Partial<Category>): Promise<boolean> {
-    // Validar que la categoría existe
+
     const existingCategory = await this.port.getCategoryById(id);
     if (!existingCategory) {
       throw new Error("Categoría no encontrada");
     }
 
-    // Validar datos de actualización
     if (category.nombre) {
       this.validateCategoryName(category.nombre);
       
@@ -118,8 +77,6 @@ export class CategoryApplicationService {
         throw new Error("Ya existe otra categoría con este nombre");
       }
     }
-
-    // Preparar datos para actualización
     const categoryToUpdate: Partial<Category> = {};
     
     if (category.nombre) categoryToUpdate.nombre = category.nombre.trim();
@@ -129,29 +86,15 @@ export class CategoryApplicationService {
     return await this.port.updateCategory(id, categoryToUpdate);
   }
 
-  /**
-   * Elimina una categoría (eliminación lógica)
-   * @param id - Identificador de la categoría
-   * @returns Promise<boolean> - true si se eliminó correctamente
-   * @throws Error si la categoría no existe
-   */
   async deleteCategory(id: number): Promise<boolean> {
     const existingCategory = await this.port.getCategoryById(id);
     if (!existingCategory) {
       throw new Error("Categoría no encontrada");
     }
-
-    // Nota: Aquí se podría agregar validación para verificar si la categoría
-    // está siendo usada en incidencias activas antes de eliminarla
     
     return await this.port.deleteCategory(id);
   }
 
-  /**
-   * Valida los datos básicos de una categoría
-   * @param category - Datos de la categoría a validar
-   * @throws Error si los datos no son válidos
-   */
   private validateCategoryData(category: Omit<Category, "id" | "fechaCreacion">): void {
     if (!category.nombre || category.nombre.trim().length === 0) {
       throw new Error("El nombre de la categoría es obligatorio");
@@ -168,11 +111,6 @@ export class CategoryApplicationService {
     }
   }
 
-  /**
-   * Valida el formato del nombre de la categoría
-   * @param nombre - Nombre a validar
-   * @throws Error si el nombre no cumple con los criterios
-   */
   private validateCategoryName(nombre: string): void {
     if (nombre.length < 3) {
       throw new Error("El nombre de la categoría debe tener al menos 3 caracteres");

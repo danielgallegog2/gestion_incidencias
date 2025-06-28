@@ -1,4 +1,3 @@
-// infrastructure/adapter/IncidentAdapter.ts
 import { Repository } from "typeorm";
 import { Incident as IncidentDomain } from "../../domain/Incident";
 import { IncidentPort } from "../../domain/IncidentPort";
@@ -20,20 +19,10 @@ export class IncidentAdapter implements IncidentPort {
   private incidentRepository: Repository<IncidentEntity>;
   port: any;
 
-  /**
-   * Constructor que inicializa el repositorio de TypeORM
-   * Obtiene la instancia del repositorio desde la fuente de datos configurada
-   */
   constructor() {
     this.incidentRepository = AppDataSource.getRepository(IncidentEntity);
   }
 
-  /**
-   * Convierte una entidad de base de datos a objeto de dominio
-   * @param entity - Entidad de base de datos
-   * @param includeRelations - Si incluir datos de entidades relacionadas
-   * @returns IncidentDomain - Objeto de dominio
-   */
   private toDomain(
     entity: IncidentEntity,
     includeRelations: boolean = false
@@ -51,7 +40,6 @@ export class IncidentAdapter implements IncidentPort {
       actualizadoEn: entity.actualizado_en,
     };
 
-    // Incluir datos relacionados si se solicita y están disponibles
     if (includeRelations) {
       if (entity.usuario) {
         incident.usuario = {
@@ -92,11 +80,6 @@ export class IncidentAdapter implements IncidentPort {
     return incident;
   }
 
-  /**
-   * Convierte un objeto de dominio a entidad de base de datos
-   * @param incident - Objeto de dominio sin ID y fechas
-   * @returns IncidentEntity - Entidad de base de datos
-   */
   private toEntity(
     incident: Omit<IncidentDomain, "id" | "creadoEn" | "actualizadoEn">
   ): IncidentEntity {
@@ -111,12 +94,6 @@ export class IncidentAdapter implements IncidentPort {
     return incidentEntity;
   }
 
-  /**
-   * Crea una nueva incidencia en la base de datos
-   * @param incident - Datos de la incidencia a crear
-   * @returns Promise<number> - ID de la incidencia creada
-   * @throws Error si falla la operación de creación
-   */
   async createIncident(
     incident: Omit<IncidentDomain, "id" | "creadoEn" | "actualizadoEn">
   ): Promise<number> {
@@ -130,13 +107,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Obtiene una incidencia por su ID con opción de incluir relaciones
-   * @param id - Identificador de la incidencia
-   * @param includeRelations - Si incluir datos relacionados
-   * @returns Promise<IncidentDomain | null> - Incidencia encontrada o null
-   * @throws Error si falla la consulta
-   */
   async getIncidentById(
     id: number,
     includeRelations: boolean = false
@@ -164,13 +134,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Obtiene todas las incidencias con filtros opcionales
-   * @param filters - Filtros para la búsqueda
-   * @param includeRelations - Si incluir datos relacionados
-   * @returns Promise<IncidentDomain[]> - Array de incidencias
-   * @throws Error si falla la consulta
-   */
   async getAllIncidents(
     filters?: {
       estado?: "abierta" | "en_progreso" | "cerrada";
@@ -253,13 +216,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Obtiene incidencias asignadas a un técnico específico
-   * @param soporteId - ID del técnico de soporte
-   * @param estado - Filtro opcional por estado
-   * @param includeRelations - Si incluir datos relacionados
-   * @returns Promise<IncidentDomain[]> - Array de incidencias asignadas
-   */
   async getIncidentsBySupport(
     soporteId: number,
     estado?: "abierta" | "en_progreso" | "cerrada",
@@ -296,13 +252,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Obtiene incidencias reportadas por un usuario específico
-   * @param usuarioId - ID del usuario que reportó
-   * @param estado - Filtro opcional por estado
-   * @param includeRelations - Si incluir datos relacionados
-   * @returns Promise<IncidentDomain[]> - Array de incidencias del usuario
-   */
   async getIncidentsByUser(
     usuarioId: number,
     estado?: "abierta" | "en_progreso" | "cerrada",
@@ -337,13 +286,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Obtiene incidencias por categoría
-   * @param categoriaId - ID de la categoría
-   * @param estado - Filtro opcional por estado
-   * @param includeRelations - Si incluir datos relacionados
-   * @returns Promise<IncidentDomain[]> - Array de incidencias de la categoría
-   */
   async getIncidentsByCategory(
     categoriaId: number,
     estado?: "abierta" | "en_progreso" | "cerrada",
@@ -378,13 +320,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Obtiene incidencias por nivel de prioridad
-   * @param prioridadId - ID de la prioridad
-   * @param estado - Filtro opcional por estado
-   * @param includeRelations - Si incluir datos relacionados
-   * @returns Promise<IncidentDomain[]> - Array de incidencias con la prioridad
-   */
   async getIncidentsByPriority(
     prioridadId: number,
     estado?: "abierta" | "en_progreso" | "cerrada",
@@ -419,13 +354,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Actualiza una incidencia existente
-   * @param id - Identificador de la incidencia
-   * @param incident - Datos parciales a actualizar
-   * @returns Promise<boolean> - true si se actualizó correctamente
-   * @throws Error si falla la actualización
-   */
   async updateIncident(
     id: number,
     incident: Partial<Omit<IncidentDomain, "id" | "creadoEn">>
@@ -439,7 +367,6 @@ export class IncidentAdapter implements IncidentPort {
         return false;
       }
 
-      // Crear objeto con los campos a actualizar
       const updatedFields: any = {};
 
       if (incident.titulo !== undefined) updatedFields.titulo = incident.titulo;
@@ -453,9 +380,8 @@ export class IncidentAdapter implements IncidentPort {
       if (incident.prioridadId !== undefined)
         updatedFields.prioridad_id = incident.prioridadId;
 
-      // Verificar que hay campos para actualizar
       if (Object.keys(updatedFields).length === 0) {
-        return true; // No hay cambios, pero es exitoso
+        return true;
       }
 
       const updateResult = await this.incidentRepository.update(
@@ -470,12 +396,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Cambia el estado de una incidencia
-   * @param id - Identificador de la incidencia
-   * @param estado - Nuevo estado
-   * @returns Promise<boolean> - true si se cambió correctamente
-   */
   async changeIncidentStatus(
     id: number,
     estado: "abierta" | "en_progreso" | "cerrada"
@@ -493,12 +413,6 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Asigna una incidencia a un técnico de soporte
-   * @param id - Identificador de la incidencia
-   * @param soporteId - ID del técnico (null para desasignar)
-   * @returns Promise<boolean> - true si se asignó correctamente
-   */
   async assignIncident(id: number, soporteId: number | null): Promise<boolean> {
     try {
       const updateResult = await this.incidentRepository.update(
@@ -513,29 +427,14 @@ export class IncidentAdapter implements IncidentPort {
     }
   }
 
-  /**
-   * Elimina una incidencia del sistema (eliminación física)
-   * @param id - Identificador de la incidencia
-   * @returns Promise<boolean> - true si se eliminó correctamente
-   * @throws Error si la incidencia no existe
-   */
   async deleteIncident(id: number): Promise<boolean> {
     const existingIncident = await this.port.getIncidentById(id);
     if (!existingIncident) {
       throw new Error("Incidencia no encontrada");
     }
-
-    // Nota: Aquí se podría agregar validación para verificar si la incidencia
-    // tiene comentarios antes de eliminarla
-
     return await this.port.deleteIncident(id);
   }
 
-  /**
-   * Obtiene estadísticas de incidencias
-   * @param filters - Filtros opcionales
-   * @returns Promise<object> - Estadísticas calculadas
-   */
   async getIncidentStatistics(filters?: {
     fechaDesde?: Date;
     fechaHasta?: Date;
@@ -553,7 +452,6 @@ export class IncidentAdapter implements IncidentPort {
     try {
       console.log("Iniciando getIncidentStatistics con filtros:", filters);
 
-      // Construir condiciones WHERE base
       let whereConditions = "1 = 1";
       const queryParams: any = {};
 
