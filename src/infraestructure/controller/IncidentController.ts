@@ -854,12 +854,6 @@ export class IncidentController {
     }
   }
 
-  /**
-   * Elimina una incidencia del sistema (eliminación física)
-   * @param id - Identificador de la incidencia
-   * @returns Promise<boolean> - true si se eliminó correctamente
-   * @throws Error si la incidencia no existe
-   */
 
   async deleteIncident(
     req: Request,
@@ -867,7 +861,7 @@ export class IncidentController {
     id: number
   ): Promise<boolean> {
     try {
-      // Verificar que la incidencia existe primero usando el repositorio
+
       const existingIncident = await this.incidentRepository.findOne({
         where: { id_incidencias: id },
       });
@@ -876,12 +870,6 @@ export class IncidentController {
         throw new Error("Incidencia no encontrada");
       }
 
-      // Aquí podrías agregar validaciones adicionales:
-      // - Solo administradores pueden eliminar incidencias
-      // - No se pueden eliminar incidencias con comentarios
-      // - Solo se pueden eliminar incidencias en estado "cerrada"
-
-      // Realizar la eliminación física
       const deleteResult = await this.incidentRepository.delete({
         id_incidencias: id,
       });
